@@ -11,7 +11,7 @@
 ############################################################################################
 
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException,ElementNotVisibleException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 import os
@@ -74,7 +74,7 @@ def get_session_time(session_id):
     }
     headers = {'Content-Type': 'text/plain'}
     r = requests.post(url, headers=headers, data=data, verify=REQ_VERIFY)
-    returned = r.content
+    returned = r.content.decode("utf-8")
     returned = returned.replace("\\", '')
 
     # Returns in XHR format. Strip out the relevant information.
@@ -107,9 +107,19 @@ for day in DAY_CODES:
         try:
             # Find the Get More Results link and click it to load next sessions
             get_results_btn = driver.find_element_by_link_text("Get More Results")
-            get_results_btn.click()
+            if (get_results_btn):
+                driver.execute_script("arguments[0].click();", get_results_btn)
+                #get_results_btn.click()
+            else:
+                more_results = False
+                break
+            print("Get More Results & sleep ...")
             sleep(3)
+        except ElementNotVisibleException as e:
+            print("ElementNotVisibleException")
+            more_results = False;    
         except NoSuchElementException as e:
+            print("NoSuchElementException")
             more_results = False
 
     # Once all sessions for the day have been loaded by the headless browser,
